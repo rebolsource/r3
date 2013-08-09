@@ -35,7 +35,7 @@
 // Boot Vars used locally:
 static	REBCNT	Native_Count;
 static	REBCNT	Native_Limit;
-static	REBCNT	Action_Count;
+static	uintptr_t	Action_Count;
 static	REBCNT	Action_Marker;
 static	REBFUN  *Native_Functions;
 static	BOOT_BLK *Boot_Block;
