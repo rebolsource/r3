@@ -368,7 +368,11 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	CHECK_STACK(&series);
 
+#ifdef __LP64__
+	if (((REBU64)length * wide) > MAX_I64) Trap0(RE_NO_MEMORY);
+#else
 	if (((REBU64)length * wide) > MAX_I32) Trap0(RE_NO_MEMORY);
+#endif
 
 	PG_Reb_Stats->Series_Made++;
 	PG_Reb_Stats->Series_Memory += length * wide;
