@@ -121,7 +121,7 @@
 
 	cp = buf;
 	for (l = 0; l < count; l++) {
-		cp = Form_Hex_Pad(cp, (REBCNT) bp, 8);
+		cp = Form_Hex_Pad(cp, (uintptr_t)bp, 8);
 
 		*cp++ = ':';
 		*cp++ = ' ';
