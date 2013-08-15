@@ -35,7 +35,7 @@
 // Boot Vars used locally:
 static	REBCNT	Native_Count;
 static	REBCNT	Native_Limit;
-static	REBCNT	Action_Count;
+static	uintptr_t	Action_Count;
 static	REBCNT	Action_Marker;
 static	REBFUN  *Native_Functions;
 static	BOOT_BLK *Boot_Block;
@@ -96,9 +96,14 @@ extern const REBYTE Str_Banner[];
 #endif
 
 	ASSERT(VAL_TYPE(&val) == 123,  RP_REBVAL_ALIGNMENT);
+#ifdef __LP64__
+	ASSERT(sizeof(REBVAL) == 32,   RP_REBVAL_ALIGNMENT);
+	ASSERT1(sizeof(REBGOB) == 84,  RP_BAD_SIZE);
+#else
 	ASSERT(sizeof(REBVAL) == 16,   RP_REBVAL_ALIGNMENT);
-	ASSERT1(sizeof(REBDAT) == 4,   RP_BAD_SIZE);
 	ASSERT1(sizeof(REBGOB) == 64,  RP_BAD_SIZE);
+#endif
+	ASSERT1(sizeof(REBDAT) == 4,   RP_BAD_SIZE);
 }
 
 
