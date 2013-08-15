@@ -71,7 +71,7 @@
 **
 ***********************************************************************/
 {
-	REBCNT size;
+	unsigned long size;
 	REBSER *output;
 	REBINT err;
 	REBYTE out_size[sizeof(REBCNT)];
