@@ -368,7 +368,11 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	CHECK_STACK(&series);
 
+#ifdef __LP64__
+	if (((REBU64)length * wide) > MAX_I64) Trap0(RE_NO_MEMORY);
+#else
 	if (((REBU64)length * wide) > MAX_I32) Trap0(RE_NO_MEMORY);
+#endif
 
 	PG_Reb_Stats->Series_Made++;
 	PG_Reb_Stats->Series_Memory += length * wide;
@@ -420,7 +424,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	memset((REBYTE *)node, 0xff, length);
 #endif
 	series->tail = series->size = 0;
-	SERIES_REST(series) = length / wide;
+	SERIES_REST(series) = length / wide; //FIXME: This is based on the assumption that length is multiple of wide
 	series->data = (REBYTE *)node;
 	series->info = wide; // also clears flags
 	LABEL_SERIES(series, "make");
@@ -639,7 +643,7 @@ clear_header:
 			count++;
 			// The node better belong to one of the pool's segments:
 			for (seg = Mem_Pools[pool_num].segs; seg; seg = seg->next) {
-				if ((int)node > (int)seg && (int)node < (int)seg + (int)seg->size) break;
+				if ((intptr_t)node > (intptr_t)seg && (intptr_t)node < (intptr_t)seg + (intptr_t)seg->size) break;
 			}
 			if (!seg) goto crash;
 			pnode = node; // for debugger
