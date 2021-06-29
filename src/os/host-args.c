@@ -45,8 +45,6 @@
 #include "reb-c.h"
 #include "reb-args.h"
 
-#define ARG_BUF_SIZE 1024
-
 extern int OS_Get_Current_Dir(REBCHR **lp);
 
 // REBOL Option --Words:
@@ -199,16 +197,33 @@ const struct arg_chr arg_chars2[] = {
 **		Parse REBOL's command line arguments, setting options
 **		and values in the provided args structure.
 **
+**		If RAW_MAIN_ARGS is used, the arguments list is not being
+**		parsed in this function, but instead will be converted to
+**		block of strings and leaved on interpreter to process it.
+**
 ***********************************************************************/
 {
+#ifdef RAW_MAIN_ARGS
+	CLEARS(rargs);
+	rargs->argc = argc;
+	rargs->argv = argv;
+	// First arg is path to executable (on most systems):
+	if (argc > 0) rargs->exe_path = *argv;
+	OS_Get_Current_Dir(&rargs->home_dir);
+#else
+	int arg_buf_size=128;
+
 	REBCHR *arg;
-	REBCHR *args = 0; // holds trailing args
+	REBCHR *args = NULL; // holds trailing args
 	int flag;
 	int i;
+	int len;
+	int size;
+	REBCHR *tmp;
 
 	CLEARS(rargs);
 
-	// First arg is path to execuable (on most systems):
+	// First arg is path to executable (on most systems):
 	if (argc > 0) rargs->exe_path = *argv;
 
 	OS_Get_Current_Dir(&rargs->home_dir);
@@ -261,12 +276,23 @@ const struct arg_chr arg_chars2[] = {
 			if (!rargs->script)
 				rargs->script = arg;
 			else {
-				int len;
 				if (!args) {
-					args = MAKE_STR(ARG_BUF_SIZE);
+					args = MAKE_STR(arg_buf_size);
+					if (!args) return;
 					args[0] = 0;
 				}
-				len = ARG_BUF_SIZE - LEN_STR(args) - 2; // space remaining
+				len = (int)LEN_STR(arg) + (int)LEN_STR(args) + 2;
+				size = arg_buf_size;
+				while (size < len) size *= 2;
+				if (size > arg_buf_size) {
+					tmp = args;
+					args = MAKE_STR(size);
+					if (!args) return;
+					memcpy(args, tmp, arg_buf_size);
+					arg_buf_size = size;
+					FREE_MEM(tmp);
+				}
+				len = arg_buf_size - (int)LEN_STR(args) - 2; // space remaining
 				JOIN_STR(args, arg, len);
 				JOIN_STR(args, TXT(" "), 1);
 			}
@@ -277,6 +303,7 @@ const struct arg_chr arg_chars2[] = {
 		args[LEN_STR(args)-1] = 0; // remove trailing space
 		Get_Ext_Arg(RO_ARGS, rargs, args);
 	}
+#endif
 }
 
 

@@ -28,6 +28,7 @@
 
 #include "reb-defs.h"
 #include "ext-types.h"
+#include "sys-value.h"
 
 /* Prefix naming conventions:
 
@@ -39,7 +40,6 @@
   RXC: REBOL eXtensions Callback flag
 
 */
-
 
 // Value structure (for passing args to and from):
 #pragma pack(4)
@@ -66,6 +66,12 @@ typedef union rxi_arg_val {
 		int width:16;
 		int height:16;
 	};
+	struct {
+		void  *ptr;
+		REBCNT type;      // Handle's name (symbol)
+		REBFLG flags:16;  // Handle_Flags
+		REBCNT index:16;  // Index into Reb_Handle_Spec value
+	} handle;
 } RXIARG;
 
 // For direct access to arg array:
@@ -107,8 +113,11 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #define RXA_INDEX(f,n)	(RXA_ARG(f,n).index)
 #define RXA_OBJECT(f,n)	(RXA_ARG(f,n).addr)
 #define RXA_MODULE(f,n)	(RXA_ARG(f,n).addr)
-#define RXA_HANDLE(f,n)	(RXA_ARG(f,n).addr)
-#define RXA_IMAGE(f,n)	(RXA_ARG(f,n).image)
+#define RXA_HANDLE(f,n)	(RXA_ARG(f,n).handle.ptr)
+#define RXA_HANDLE_TYPE(f,n)  (RXA_ARG(f,n).handle.type)
+#define RXA_HANDLE_FLAGS(f,n)  (RXA_ARG(f,n).handle.flags)
+#define RXA_HANDLE_INDEX(f,n)  (RXA_ARG(f,n).handle.index)
+#define RXA_IMAGE(f,n)	      (RXA_ARG(f,n).image)
 #define RXA_IMAGE_BITS(f,n)	  ((REBYTE *)RL_SERIES((RXA_ARG(f,n).image), RXI_SER_DATA))
 #define RXA_IMAGE_WIDTH(f,n)  (RXA_ARG(f,n).width)
 #define RXA_IMAGE_HEIGHT(f,n) (RXA_ARG(f,n).height)
@@ -161,3 +170,6 @@ enum {
 	RXC_QUEUED,		// pending in event queue
 	RXC_DONE,		// call completed, structs can be freed
 };
+
+
+#define AS_WORD(w) RL_MAP_WORD(b_cast(w)) // may be used to awoid warning casting from char* to REBYTE*
